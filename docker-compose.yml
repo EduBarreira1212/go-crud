@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-go-crud-db
+    ports:
+      - "3306:3306"
+    env_file:
+      - .env
+    volumes:
+      - ./.mysql-data:/var/lib/mysql
