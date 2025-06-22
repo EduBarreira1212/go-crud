@@ -56,3 +56,37 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte(fmt.Sprintf("User created with sucess! Id: %d", idInserted)))
 }
+
+func GetUsers(w http.ResponseWriter, r *http.Request) {
+	db, err := database.Conect()
+	if err != nil {
+		w.Write([]byte("Error to connect with database!"))
+		return
+	}
+	defer db.Close()
+
+	rows, err := db.Query("select * from user")
+	if err != nil {
+		w.Write([]byte("Error to select from database!"))
+		return
+	}
+	defer rows.Close()
+
+	var users []user
+	for rows.Next() {
+		var user user
+
+		if err := rows.Scan(&user.ID, &user.Name, &user.Email); err != nil {
+			w.Write([]byte("Error to scan from database!"))
+			return
+		}
+
+		users = append(users, user)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(users); err != nil {
+		w.Write([]byte("Error to convert users to JSON"))
+		return
+	}
+}
