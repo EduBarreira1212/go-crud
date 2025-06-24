@@ -132,3 +132,46 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+func UpdateUser(w http.ResponseWriter, r *http.Request) {
+	parameters := mux.Vars(r)
+
+	ID, err := strconv.ParseUint(parameters["id"], 10, 32)
+	if err != nil {
+		w.Write([]byte("Error to parse user id!"))
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		w.Write([]byte("Error to read body!"))
+		return
+	}
+
+	var user user
+	if err := json.Unmarshal(body, &user); err != nil {
+		w.Write([]byte("Error to convert user to struct"))
+		return
+	}
+
+	db, err := database.Conect()
+	if err != nil {
+		w.Write([]byte("Error to connect with database!"))
+		return
+	}
+	defer db.Close()
+
+	statement, err := db.Prepare("UPDATE user SET name = ?, email = ? where id = ?")
+	if err != nil {
+		w.Write([]byte("Error to create statement"))
+		return
+	}
+	defer statement.Close()
+
+	if _, err := statement.Exec(user.Name, user.Email, ID); err != nil {
+		w.Write([]byte("Error to execute statement"))
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
